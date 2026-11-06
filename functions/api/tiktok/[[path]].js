@@ -12,7 +12,8 @@ export async function onRequest({request,env,params}){
   const allowed={
     "business-centers":[],
     "business-center-accounts":["bc_id"],
-    "daily-spend":["start_date","end_date"]
+    "daily-spend":["start_date","end_date"],
+    "daily-report":["date"]
   };
   if(!Object.prototype.hasOwnProperty.call(allowed,p))return Response.json({error:"接口未开放"},{status:404});
   const keys=[...incoming.searchParams.keys()];
