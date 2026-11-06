@@ -49,7 +49,7 @@ button{border:0;border-radius:8px;background:var(--purple);color:#fff;padding:10
 const app=document.querySelector(".app");const API="/api/tiktok/";let start=new Date(Date.now()-7*86400000).toISOString().slice(0,10),end=new Date(Date.now()-86400000).toISOString().slice(0,10),bcs=[],currentBC=null,currentAccount=null,showZero=false,spendRows=[];
 const $=s=>document.querySelector(s),money=n=>Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function api(path,opts={}){let r=await fetch(path,{credentials:"same-origin",...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}}),t=await r.text(),d={};try{d=t?JSON.parse(t):{}}catch{d={error:t}}if(r.status===401&&path!=="/api/login"){login("登录已过期，请重新登录");throw Error("登录已过期")}if(!r.ok)throw Error(d.error||d.message||("请求失败 "+r.status));return d}
-function login(function login(msg=""){
+function login(msg=""){
   app.style.display="none";
   let panel=$("#login-panel");
   if(!panel){
@@ -73,7 +73,8 @@ function login(function login(msg=""){
       button.disabled=false;
     }
   };
-}(){return '<div class="toolbar"><label class="field">开始日期<input id="ds" type="date" value="'+start+'"></label><label class="field">结束日期<input id="de" type="date" value="'+end+'"></label><button onclick="applyDates()">查询</button><button class="secondary" onclick="logout()">退出</button></div>'}
+}
+function dates(){return '<div class="toolbar"><label class="field">开始日期<input id="ds" type="date" value="'+start+'"></label><label class="field">结束日期<input id="de" type="date" value="'+end+'"></label><button onclick="applyDates()">查询</button><button class="secondary" onclick="logout()">退出</button></div>'}
 async function applyDates(){start=$("#ds").value;end=$("#de").value;if(!start||!end||start>end)return alert("日期范围不正确");await loadSpend();render()}
 async function loadSpend(){const d=await api(API+"daily-spend?start_date="+start+"&end_date="+end);if(!d.success)throw Error(d.error||"每日消耗数据读取失败");spendRows=Array.isArray(d.data)?d.data:[]}
 async function init(){try{const d=await api(API+"business-centers");if(!d.success)throw Error(d.message||"读取 BC 失败");bcs=(d.data?.list||[]).map(x=>({id:String(x.bc_info?.bc_id||""),name:x.bc_info?.name||"未命名 BC",accounts:[]})).filter(x=>x.id);await loadSpend();for(const bc of bcs){const a=await api(API+"business-center-accounts?bc_id="+encodeURIComponent(bc.id));if(!a.success)throw Error(a.message||"广告账户读取失败");bc.accounts=(a.data?.list||[]).map(x=>({id:String(x.asset_id||x.advertiser_id||""),name:x.asset_name||x.name||"未命名账户",currency:x.currency||"",raw:x})).filter(x=>x.id);for(const ac of bc.accounts){const row=spendRows.find(x=>String(x.advertiser_id)===ac.id&&String(x.business_center_id)===bc.id);if(row?.currency)ac.currency=row.currency;ac.daily=spendRows.filter(x=>String(x.advertiser_id)===ac.id&&String(x.business_center_id)===bc.id).map(x=>[x.report_date,Number(x.spend||0)]);}}render()}catch(e){if(!document.querySelector(".app"))return;$("#content").innerHTML='<div class="status">'+esc(e.message)+'</div>'}}
