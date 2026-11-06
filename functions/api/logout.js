@@ -1,0 +1,1 @@
+export async function onRequestPost(){return Response.json({ok:true},{headers:{"Set-Cookie":"tiktok_spend_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"}})}
