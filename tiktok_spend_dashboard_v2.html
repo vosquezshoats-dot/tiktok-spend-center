@@ -75,10 +75,10 @@ function login(msg=""){
   };
 }
 function dates(){return '<div class="toolbar"><label class="field">开始日期<input id="ds" type="date" value="'+start+'"></label><label class="field">结束日期<input id="de" type="date" value="'+end+'"></label><button onclick="applyDates()">查询历史区间</button><button class="secondary" onclick="applyRealtime()">查询单日实时消耗</button><button class="secondary" onclick="logout()">退出</button><div class="note" style="width:100%;margin:0">单日实时查询按 BC 分批读取 TikTok 报表；多日区间读取已有历史记录。</div></div>'}
-async function applyDates(){start=$("#ds").value;end=$("#de").value;if(!start||!end||start>end)return alert("日期范围不正确");await loadSpend();render()}
-async function applyRealtime(){const date=$("#de").value;if(!date)return alert("请选择日期");start=end=date;await loadSpend();render()}
-async function loadSpend(){
-  if(start===end){
+async function applyDates(){start=$("#ds").value;end=$("#de").value;if(!start||!end||start>end)return alert("日期范围不正确");await loadSpend("history");render()}
+async function applyRealtime(){const date=$("#de").value;if(!date)return alert("请选择日期");start=end=date;await loadSpend("realtime");render()}
+async function loadSpend(mode="history"){
+  if(mode==="realtime"){
     const rows=[];
     for(const bc of bcs){
       const d=await api(API+"daily-report?date="+encodeURIComponent(start)+"&bc_id="+encodeURIComponent(bc.id));
