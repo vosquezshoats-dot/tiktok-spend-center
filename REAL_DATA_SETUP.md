@@ -20,6 +20,9 @@ The Pages Functions implement an HttpOnly, Secure, SameSite=Strict 8-hour signed
 The dashboard uses the Worker endpoints:
 - GET /api/tiktok/business-centers
 - GET /api/tiktok/business-center-accounts?bc_id=...
-- GET /api/tiktok/daily-spend?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+- GET /api/tiktok/daily-spend?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD (historical rows already stored in D1)
+- GET /api/tiktok/daily-report?date=YYYY-MM-DD&bc_id=... (live single-day TikTok report; read-only and not persisted to D1)
+
+The live daily-report endpoint does not backfill `daily_spend`. Historical range queries therefore include only rows already present in D1. The current Worker scheduled sync refreshes Business Center and advertiser-account metadata; it does not yet collect or persist daily Spend.
 
 No sync endpoint is called by the dashboard. It only reads existing data.
