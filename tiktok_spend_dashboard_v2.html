@@ -90,11 +90,22 @@ async function loadSpend(){
       }
     }
     spendRows=rows;
-    return;
+  }else{
+    const d=await api(API+"daily-spend?start_date="+start+"&end_date="+end);
+    if(!d.success)throw Error(d.error||"每日消耗数据读取失败");
+    spendRows=Array.isArray(d.data)?d.data:[];
   }
-  const d=await api(API+"daily-spend?start_date="+start+"&end_date="+end);
-  if(!d.success)throw Error(d.error||"每日消耗数据读取失败");
-  spendRows=Array.isArray(d.data)?d.data:[];
+  syncSpendToAccounts();
+}
+function syncSpendToAccounts(){
+  for(const bc of bcs){
+    for(const account of bc.accounts||[]){
+      const rows=spendRows.filter(x=>String(x.advertiser_id)===account.id&&String(x.business_center_id)===bc.id);
+      const latest=rows.find(x=>x.currency);
+      if(latest?.currency)account.currency=latest.currency;
+      account.daily=rows.map(x=>[x.report_date,Number(x.spend||0),x.currency||account.currency||""]);
+    }
+  }
 }
 async function init(){try{const d=await api(API+"business-centers");if(!d.success)throw Error(d.message||"读取 BC 失败");bcs=(d.data?.list||[]).map(x=>({id:String(x.bc_info?.bc_id||""),name:x.bc_info?.name||"未命名 BC",accounts:[]})).filter(x=>x.id);await loadSpend();for(const bc of bcs){const a=await api(API+"business-center-accounts?bc_id="+encodeURIComponent(bc.id));if(!a.success)throw Error(a.message||"广告账户读取失败");bc.accounts=(a.data?.list||[]).map(x=>({id:String(x.asset_id||x.advertiser_id||""),name:x.asset_name||x.name||"未命名账户",currency:x.currency||"",raw:x})).filter(x=>x.id);for(const ac of bc.accounts){const row=spendRows.find(x=>String(x.advertiser_id)===ac.id&&String(x.business_center_id)===bc.id);if(row?.currency)ac.currency=row.currency;ac.daily=spendRows.filter(x=>String(x.advertiser_id)===ac.id&&String(x.business_center_id)===bc.id).map(x=>[x.report_date,Number(x.spend||0),x.currency||ac.currency||""]);}}render()}catch(e){if(!document.querySelector(".app"))return;$("#content").innerHTML='<div class="status">'+esc(e.message)+'</div>'}}
 function total(a){return(a.daily||[]).filter(x=>x[0]>=start&&x[0]<=end).reduce((s,x)=>s+x[1],0)}
