@@ -40,46 +40,85 @@ button{border:0;border-radius:8px;background:var(--purple);color:#fff;padding:10
   <div class="sidefoot">TikTok Marketing API<br>Spend Dashboard</div>
 </aside>
 <main>
-  <div class="top"><div class="eyebrow">WORKSPACE / SPEND REPORT</div><div class="topright">● 本地演示模式</div></div>
+  <div class="top"><div class="eyebrow">WORKSPACE / SPEND REPORT</div><div class="topright">● 已连接数据接口</div></div>
   <section id="content"></section>
-  <div class="footer">演示数据仅用于预览界面。当前版本尚未连接 TikTok Marketing API，不代表真实广告消耗。</div>
+  <div class="footer">数据来源：现有 TikTok Worker 与 D1。若账户或日期无记录，将如实显示为空/零值。</div>
 </main>
 </div>
 <script>
-const demo=[
- {id:"7644817117799481345",name:"Global Growth Business Center",accounts:[
-  {id:"701000001",name:"Brand US - Main",currency:"USD",daily:[["2026-11-01",125.40],["2026-11-02",98.20],["2026-11-03",146.80]]},
-  {id:"701000002",name:"Brand UK - Ads",currency:"GBP",daily:[["2026-11-01",42.10],["2026-11-02",0],["2026-11-03",65.30]]},
-  {id:"701000003",name:"Brand SG - Test",currency:"SGD",daily:[["2026-11-01",0],["2026-11-02",0],["2026-11-03",0]]}]},
- {id:"7644817117799481346",name:"North America Business Center",accounts:[
-  {id:"702000001",name:"US Performance",currency:"USD",daily:[["2026-11-01",310.50],["2026-11-02",288.10],["2026-11-03",322.70]]},
-  {id:"702000002",name:"Canada Campaigns",currency:"CAD",daily:[["2026-11-01",74.25],["2026-11-02",81.40],["2026-11-03",0]]}]},
- {id:"7644817117799481347",name:"Europe Business Center",accounts:[
-  {id:"703000001",name:"Germany Ads",currency:"EUR",daily:[["2026-11-01",91.20],["2026-11-02",103.60],["2026-11-03",88.90]]}]},
- {id:"7644817117799481348",name:"Asia Pacific Business Center",accounts:[
-  {id:"704000001",name:"Japan Store",currency:"JPY",daily:[["2026-11-01",12800],["2026-11-02",15400],["2026-11-03",13900]]},
-  {id:"704000002",name:"Australia Store",currency:"AUD",daily:[["2026-11-01",0],["2026-11-02",55.20],["2026-11-03",62.80]]}]},
- {id:"7644817117799481349",name:"Test Business Center",accounts:[
-  {id:"705000001",name:"Creative Test",currency:"USD",daily:[["2026-11-01",0],["2026-11-02",0],["2026-11-03",12.50]]}]}
-];
-let start="2026-11-01",end="2026-11-03",showZero=false,currentBC=null,currentAccount=null;
-const money=(n)=>Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
-function total(a){return a.daily.filter(x=>x[0]>=start&&x[0]<=end).reduce((s,x)=>s+x[1],0)}
-function filteredAccounts(bc){return bc.accounts.filter(a=>showZero||total(a)>0)}
-function aggregate(bc){let out={};bc.accounts.forEach(a=>{out[a.currency]=(out[a.currency]||0)+total(a)});return out}
-function dateControls(){return `<div class="toolbar"><label class="field">开始日期 / Start date<input id="start" type="date" value="${start}"></label><label class="field">结束日期 / End date<input id="end" type="date" value="${end}"></label><button onclick="applyDates()">查询 / Apply</button></div>`}
-function applyDates(){let s=document.getElementById("start").value,e=document.getElementById("end").value;if(!s||!e||s>e){alert("请检查日期范围 / Please check the date range.");return}start=s;end=e;render()}
-function renderHome(){currentBC=null;currentAccount=null;let html=`<h1>消耗日报</h1><p class="sub">Business Center Spend Overview · 按 BC 独立统计，不合并币种</p>${dateControls()}<p class="note">以下为演示数据 · 点击任意 Business Center 查看广告账户</p><div class="grid">`;
-demo.forEach(bc=>{let ac=bc.accounts.filter(a=>total(a)>0).length;let sums=aggregate(bc);html+=`<article class="card" onclick="openBC('${bc.id}')"><div class="cardhead"><div><div class="bcname">${bc.name}</div><div class="id">BC ID: ${bc.id}</div></div><span class="pill">${ac} 个有消耗账户</span></div><div class="metrics"><div class="metric"><small>广告账户总数</small><strong>${bc.accounts.length}</strong></div><div class="metric"><small>有消耗账户</small><strong>${ac}</strong></div></div><div class="spends">${Object.entries(sums).filter(x=>x[1]>0).map(([c,v])=>`<span class="currency">${c}<b>${money(v)}</b></span>`).join("")||'<span class="currency">暂无消耗</span>'}</div></article>`});html+="</div>";document.getElementById("content").innerHTML=html}
-function openBC(id){currentBC=demo.find(x=>x.id===id);renderBC()}
-function renderBC(){let bc=currentBC,accounts=filteredAccounts(bc);let html=`<span class="back" onclick="renderHome()">← 返回日报首页 / Back</span><h1>${bc.name}</h1><p class="sub">BC ID: ${bc.id} · 广告账户明细</p>${dateControls()}<div class="toolbar" style="margin-top:0"><label class="switch" style="margin-left:0"><input type="checkbox" ${showZero?"checked":""} onchange="showZero=this.checked;renderBC()"> 显示零消耗账户 / Show zero-spend accounts</label><span class="note" style="margin:0">${accounts.length} 个账户</span></div><div class="tablewrap"><table><thead><tr><th>广告账户名称</th><th>Advertiser ID</th><th>币种</th><th>Spend</th><th>明细</th></tr></thead><tbody>`;
-accounts.forEach(a=>html+=`<tr><td>${a.name}</td><td>${a.id}</td><td>${a.currency}</td><td><b>${money(total(a))}</b></td><td><span class="link" onclick="openAccount('${a.id}')">查看每日消耗 →</span></td></tr>`);
-if(!accounts.length)html+='<tr><td colspan="5" class="empty">当前日期范围内没有消耗账户</td></tr>';html+=`</tbody></table></div>`;document.getElementById("content").innerHTML=html}
+const app=document.querySelector(".app");const API="/api/tiktok/";const localDate=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return y+"-"+m+"-"+day};const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);const weekAgo=new Date();weekAgo.setDate(weekAgo.getDate()-7);let start=localDate(weekAgo),end=localDate(yesterday),bcs=[],currentBC=null,currentAccount=null,showZero=false,spendRows=[];
+const $=s=>document.querySelector(s),money=n=>Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function api(path,opts={}){let r=await fetch(path,{credentials:"same-origin",...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}}),t=await r.text(),d={};try{d=t?JSON.parse(t):{}}catch{d={error:t}}if(r.status===401&&path!=="/api/login"){login("登录已过期，请重新登录");throw Error("登录已过期")}if(!r.ok)throw Error(d.error||d.message||("请求失败 "+r.status));return d}
+function login(msg=""){
+  app.style.display="none";
+  let panel=$("#login-panel");
+  if(!panel){
+    panel=document.createElement("div");
+    panel.id="login-panel";
+    panel.style.cssText="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:#f7f7fb;z-index:9999";
+    document.body.appendChild(panel);
+  }
+  panel.innerHTML='<main style="width:100%;max-width:420px;background:white;padding:28px;border-radius:14px;box-shadow:0 8px 32px #25254a12"><h1>TikTok Spend Center</h1><p>请输入工作台密码</p><form id="lf"><input id="pw" type="password" required placeholder="工作台密码" autocomplete="current-password" style="padding:12px;width:100%;margin:12px 0;border:1px solid #e3e4ec;border-radius:7px"><button>登录</button></form><p id="lm" class="note">'+esc(msg)+'</p></main>';
+  $("#lf").onsubmit=async e=>{
+    e.preventDefault();
+    const button=$("#lf button");
+    button.disabled=true;
+    try{
+      await api("/api/login",{method:"POST",body:JSON.stringify({password:$("#pw").value})});
+      panel.remove();
+      app.style.display="flex";
+      await init();
+    }catch(x){
+      $("#lm").textContent=x.message;
+      button.disabled=false;
+    }
+  };
+}
+function dates(){return '<div class="toolbar"><label class="field">开始日期<input id="ds" type="date" value="'+start+'"></label><label class="field">结束日期<input id="de" type="date" value="'+end+'"></label><button onclick="applyDates()">查询历史区间</button><button class="secondary" onclick="applyRealtime()">查询单日实时消耗</button><button class="secondary" onclick="logout()">退出</button><div class="note" style="width:100%;margin:0">单日实时查询按 BC 分批读取 TikTok 报表；多日区间读取已有历史记录。</div></div>'}
+async function applyDates(){start=$("#ds").value;end=$("#de").value;if(!start||!end||start>end)return alert("日期范围不正确");await loadSpend("history");render()}
+async function applyRealtime(){const date=$("#de").value;if(!date)return alert("请选择日期");start=end=date;await loadSpend("realtime");render()}
+async function loadSpend(mode="history"){
+  if(mode==="realtime"){
+    const rows=[];
+    for(const bc of bcs){
+      const d=await api(API+"daily-report?date="+encodeURIComponent(start)+"&bc_id="+encodeURIComponent(bc.id));
+      if(!d.success)throw Error(d.error||("实时消耗读取失败："+bc.name));
+      for(const center of d.data?.business_centers||[]){
+        for(const account of center.accounts||[]){
+          rows.push({business_center_id:center.business_center_id,advertiser_id:account.advertiser_id,report_date:start,currency:account.currency||"UNKNOWN",spend:String(account.spend??0)});
+        }
+      }
+    }
+    spendRows=rows;
+  }else{
+    const d=await api(API+"daily-spend?start_date="+start+"&end_date="+end);
+    if(!d.success)throw Error(d.error||"每日消耗数据读取失败");
+    spendRows=Array.isArray(d.data)?d.data:[];
+  }
+  syncSpendToAccounts();
+}
+function syncSpendToAccounts(){
+  for(const bc of bcs){
+    for(const account of bc.accounts||[]){
+      const rows=spendRows.filter(x=>String(x.advertiser_id)===account.id&&String(x.business_center_id)===bc.id);
+      const latest=rows.find(x=>x.currency);
+      if(latest?.currency)account.currency=latest.currency;
+      account.daily=rows.map(x=>[x.report_date,Number(x.spend||0),x.currency||account.currency||""]);
+    }
+  }
+}
+async function init(){try{const d=await api(API+"business-centers");if(!d.success)throw Error(d.message||"读取 BC 失败");bcs=(d.data?.list||[]).map(x=>({id:String(x.bc_info?.bc_id||""),name:x.bc_info?.name||"未命名 BC",accounts:[]})).filter(x=>x.id);await loadSpend();for(const bc of bcs){const a=await api(API+"business-center-accounts?bc_id="+encodeURIComponent(bc.id));if(!a.success)throw Error(a.message||"广告账户读取失败");bc.accounts=(a.data?.list||[]).map(x=>({id:String(x.asset_id||x.advertiser_id||""),name:x.asset_name||x.name||"未命名账户",currency:x.currency||"",raw:x})).filter(x=>x.id);for(const ac of bc.accounts){const row=spendRows.find(x=>String(x.advertiser_id)===ac.id&&String(x.business_center_id)===bc.id);if(row?.currency)ac.currency=row.currency;ac.daily=spendRows.filter(x=>String(x.advertiser_id)===ac.id&&String(x.business_center_id)===bc.id).map(x=>[x.report_date,Number(x.spend||0),x.currency||ac.currency||""]);}}render()}catch(e){if(!document.querySelector(".app"))return;$("#content").innerHTML='<div class="status">'+esc(e.message)+'</div>'}}
+function total(a){return(a.daily||[]).filter(x=>x[0]>=start&&x[0]<=end).reduce((s,x)=>s+x[1],0)}
+function currencyTotals(a){const out={};(a.daily||[]).filter(x=>x[0]>=start&&x[0]<=end).forEach(x=>{const c=x[2]||a.currency||"币种待确认";out[c]=(out[c]||0)+x[1]});return out}
+function renderHome(){currentBC=null;currentAccount=null;let html='<h1>消耗日报</h1><p class="sub">Business Center Spend Overview · D1 记录 '+spendRows.length+' 条 · 最新日期 '+spendRows.reduce((m,x)=>x.report_date>m?x.report_date:m,"无")+'</p>'+dates()+'<div class="grid">';bcs.forEach(b=>{let sums={};b.accounts.forEach(a=>Object.entries(currencyTotals(a)).forEach(([c,v])=>sums[c]=(sums[c]||0)+v));let count=b.accounts.filter(a=>total(a)>0).length;html+='<article class="card" onclick="openBC(\''+esc(b.id)+'\')"><div class="cardhead"><div><div class="bcname">'+esc(b.name)+'</div><div class="id">BC ID: '+esc(b.id)+'</div></div><span class="pill">'+count+' 个有消耗账户</span></div><div class="metrics"><div class="metric"><small>广告账户总数</small><strong>'+b.accounts.length+'</strong></div><div class="metric"><small>有消耗账户</small><strong>'+count+'</strong></div></div><div class="spends">'+Object.entries(sums).map(([c,v])=>'<span class="currency">'+esc(c)+'<b>'+money(v)+'</b></span>').join("")+'</div></article>'});html+='</div>';$("#content").innerHTML=html}
+function openBC(id){currentBC=bcs.find(x=>x.id===id);renderBC()}
+function renderBC(){let a=currentBC.accounts.filter(x=>showZero||total(x)>0);$("#content").innerHTML='<span class="back" onclick="renderHome()">← 返回日报首页</span><h1>'+esc(currentBC.name)+'</h1><p class="sub">BC ID: '+esc(currentBC.id)+'</p>'+dates()+'<div class="toolbar"><label class="switch"><input type="checkbox" '+(showZero?'checked':'')+' onchange="showZero=this.checked;renderBC()"> 显示零消耗账户</label></div><div class="tablewrap"><table><thead><tr><th>广告账户名称</th><th>Advertiser ID</th><th>币种</th><th>Spend</th><th>明细</th></tr></thead><tbody>'+a.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.id)+'</td><td>'+esc(x.currency)+'</td><td><b>'+(Object.entries(currencyTotals(x)).map(([c,v])=>esc(c)+" "+money(v)).join(" / ")||"—")+'</b></td><td><span class="link" onclick="openAccount(\''+esc(x.id)+'\')">查看每日消耗 →</span></td></tr>').join("")+'</tbody></table></div>'}
 function openAccount(id){currentAccount=currentBC.accounts.find(x=>x.id===id);renderAccount()}
-function renderAccount(){let a=currentAccount;let rows=a.daily.filter(x=>x[0]>=start&&x[0]<=end);let html=`<span class="back" onclick="renderBC()">← 返回账户列表 / Back</span><h1>${a.name}</h1><p class="sub">Advertiser ID: ${a.id} · ${a.currency} · 每日消耗明细</p>${dateControls()}<div class="tablewrap"><table><thead><tr><th>日期 / Date</th><th>Spend (${a.currency})</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x[0]}</td><td><b>${money(x[1])}</b></td></tr>`).join("")||'<tr><td colspan="2" class="empty">所选日期范围没有数据</td></tr>'}</tbody></table></div><div style="margin-top:16px"><button onclick="exportCSV()">导出 CSV / Export</button></div>`;document.getElementById("content").innerHTML=html}
+function renderAccount(){let a=currentAccount,rows=(a.daily||[]).filter(x=>x[0]>=start&&x[0]<=end);$("#content").innerHTML='<span class="back" onclick="renderBC()">← 返回账户列表</span><h1>'+esc(a.name)+'</h1><p class="sub">Advertiser ID: '+esc(a.id)+' · '+esc(a.currency)+'</p>'+dates()+'<div class="tablewrap"><table><thead><tr><th>日期</th><th>币种</th><th>Spend</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x[0])+'</td><td>'+esc(x[2]||a.currency)+'</td><td><b>'+money(x[1])+'</b></td></tr>').join("")+'</tbody></table></div><div style="margin-top:16px"><button onclick="exportCSV()">导出 CSV / Export</button></div>'}
+function exportCSV(){const a=currentAccount,rows=[["Date","Advertiser ID","Account","Currency","Spend"],...(a.daily||[]).filter(x=>x[0]>=start&&x[0]<=end).map(x=>[x[0],a.id,a.name,x[2]||a.currency,x[1]])];const csv="\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=a.id+"_daily_spend.csv";link.click();URL.revokeObjectURL(url)}
 function render(){if(currentAccount)renderAccount();else if(currentBC)renderBC();else renderHome()}
-function exportCSV(){let a=currentAccount,rows=[["Date","Advertiser ID","Account","Currency","Spend"],...a.daily.filter(x=>x[0]>=start&&x[0]<=end).map(x=>[x[0],a.id,a.name,a.currency,x[1]])];let csv="\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");let blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=`${a.id}_daily_spend.csv`;link.click();URL.revokeObjectURL(url)}
-renderHome();
+async function logout(){await api("/api/logout",{method:"POST"});login("已退出登录")}
+login();
 </script>
 </body>
 </html>
