@@ -1,6 +1,6 @@
 # TikTok Spend Center real-data integration (draft)
 
-This branch replaces the hard-coded demo data with requests to the existing Worker through Cloudflare Pages Functions. It does not alter Worker, D1, TikTok OAuth credentials, or historical rows.
+This branch replaces the hard-coded demo data with requests to the existing Worker through Cloudflare Pages Functions. It does not alter the D1 schema, TikTok OAuth credentials, or delete historical rows.
 
 ## Required Pages production environment variables (add before enabling production)
 - TIKTOK_WORKER_URL = https://tiktok-callback.vosquezshoats.workers.dev
@@ -21,8 +21,8 @@ The dashboard uses the Worker endpoints:
 - GET /api/tiktok/business-centers
 - GET /api/tiktok/business-center-accounts?bc_id=...
 - GET /api/tiktok/daily-spend?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD (historical rows already stored in D1)
-- GET /api/tiktok/daily-report?date=YYYY-MM-DD&bc_id=... (live single-day TikTok report; read-only and not persisted to D1)
+- GET /api/tiktok/daily-report?date=YYYY-MM-DD&bc_id=... (live single-day TikTok report; successful verified rows are persisted to D1)
 
-The live daily-report endpoint now writes each verified BC/account/date/currency result into `daily_spend` using its composite primary key. The Worker scheduled sync also has a resumable Spend phase after metadata sync: it collects the previous UTC calendar day for each stored BC/account batch and upserts rows into D1. Historical dates before this feature are not automatically backfilled; use the live daily-report endpoint for a selected date/BC to populate those dates.
+The live daily-report endpoint writes each verified BC/account/date/currency result into `daily_spend` using its composite primary key. The Worker scheduled sync also has a resumable Spend phase after metadata sync: it collects the previous UTC calendar day for each stored BC/account batch and upserts rows into D1. Historical dates before collection was enabled are not automatically backfilled; use the live daily-report endpoint for a selected date/BC to populate those dates.
 
-No sync endpoint is called by the dashboard. It only reads existing data.
+The dashboard does not invoke the scheduled sync handler. Historical-range views read existing D1 rows; the explicit single-day real-time query calls the live report endpoint, which also writes the verified result to D1.
