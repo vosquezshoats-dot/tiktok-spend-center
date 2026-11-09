@@ -23,6 +23,6 @@ The dashboard uses the Worker endpoints:
 - GET /api/tiktok/daily-spend?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD (historical rows already stored in D1)
 - GET /api/tiktok/daily-report?date=YYYY-MM-DD&bc_id=... (live single-day TikTok report; read-only and not persisted to D1)
 
-The live daily-report endpoint does not backfill `daily_spend`. Historical range queries therefore include only rows already present in D1. The current Worker scheduled sync refreshes Business Center and advertiser-account metadata; it does not yet collect or persist daily Spend.
+The live daily-report endpoint now writes each verified BC/account/date/currency result into `daily_spend` using its composite primary key. The Worker scheduled sync also has a resumable Spend phase after metadata sync: it collects the previous UTC calendar day for each stored BC/account batch and upserts rows into D1. Historical dates before this feature are not automatically backfilled; use the live daily-report endpoint for a selected date/BC to populate those dates.
 
 No sync endpoint is called by the dashboard. It only reads existing data.
